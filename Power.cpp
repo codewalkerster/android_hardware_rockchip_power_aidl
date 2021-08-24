@@ -33,6 +33,7 @@
 #define DMC_GOV_PATH "/sys/class/devfreq/dmc/system_status"
 
 static int is_inited = 0;
+static int boost_state = 0;
 
 namespace aidl {
 namespace android {
@@ -305,11 +306,18 @@ void Power::performanceBoost(bool on) {
         ALOGI("RK performance_boost skiped during boot!");
         return;
     }
+
     ALOGV("RK performance_boost Entered!");
+
+    if (boost_state == on) {
+        ALOGV("RK performance_boost return because of multiplicating ! %d", on);
+        return;
+    }
     sysfs_write(CPU_CLUST0_SCAL_MIN_FREQ_PATH, on?cpu_clust0_max_freq.c_str():cpu_clust0_min_freq.c_str());
     sysfs_write(CPU_CLUST1_SCAL_MIN_FREQ_PATH, on?cpu_clust1_max_freq.c_str():cpu_clust1_min_freq.c_str());
     sysfs_write((_gpu_path + "/min_freq").c_str(), on?gpu_max_freq.c_str():gpu_min_freq.c_str());
     sysfs_write(DMC_GOV_PATH, on?"p":"n");
+    boost_state = on;
 }
 
 void Power::powerSave(bool on) {
